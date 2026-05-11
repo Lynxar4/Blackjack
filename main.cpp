@@ -4,7 +4,7 @@
 void hit();
 
 static int total{};
-static int additionalCards{ 3 };
+static int additionalCards{ 0 };
 
 void choice()
 {
@@ -14,8 +14,8 @@ void choice()
 
 	if (input == "hit")
 	{
-		hit();
 		++additionalCards;
+		hit();
 	}
 	else if (input == "stand")
 	{
@@ -29,14 +29,18 @@ void hit()
 
 	switch (additionalCards)
 	{
-	case 3: cardNumber = "third";
-			break;
-	case 4: cardNumber = "fourth";
-			break;
-	case 5: cardNumber = "fifth";
-			break;
-	case 6: cardNumber = "sixth";
-			break;
+	case 1:
+		cardNumber = "third";
+		break;
+	case 2:
+		cardNumber = "fourth";
+		break;
+	case 3:
+		cardNumber = "fifth";
+		break;
+	case 4:
+		cardNumber = "sixth";
+		break;
 	}
 
 	int newCard{ Random::get(1, 11) };
