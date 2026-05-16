@@ -163,7 +163,7 @@ void intro()
 		return;
 	}
 
-	std::cout << "Total: " << total << '\n';
+	std::cout << "Total: " << total << "\n\n";
 
 	std::cout << "Dealer's first card: ";
 	int randIndex3{ Random::get(0, 13) };
