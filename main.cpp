@@ -12,6 +12,22 @@ struct Card
 {
 	int value{};
 	std::string cardName{};
+
+	void aceChecker()
+	{
+		if (cardName == "Ace" && value + total > 21)
+		{
+			value = 1;
+		}
+	}
+
+	void dealerAceChecker()
+	{
+		if (cardName == "Ace" && value + dealerTotal > 21)
+		{
+			value = 1;
+		}
+	}
 };
 
 namespace Blackjack
@@ -35,7 +51,6 @@ void choice()
 
 	if (input == "hit")
 	{
-		++additionalCards;
 		hit();
 	}
 	else if (input == "stand")
@@ -44,64 +59,7 @@ void choice()
 	}
 }
 
-void dealerAddCard()
-{
-	int randIndex{ Random::get(0, 13) };
-	Card newCard{ Blackjack::cardValues[randIndex] };
-	
-	++dealerAdditionalCards;
-	std::string cardNumber{};
-	switch (dealerAdditionalCards)
-	{
-	case 1:
-		cardNumber = "third";
-		break;
-	case 2:
-		cardNumber = "fourth";
-		break;
-	case 3:
-		cardNumber = "fifth";
-		break;
-	case 4:
-		cardNumber = "sixth";
-		break;
-	}
-
-	std::cout << "Dealer's " << cardNumber << " card: " << newCard.cardName << '\n';
-	dealerTotal += newCard.value;
-	std::cout << "Dealer's total: " << dealerTotal << '\n';
-}
-
-void stand()
-{
-	int randIndex{ Random::get(0, 13) };
-	Card dealerCard{ Blackjack::cardValues[randIndex] };
-	dealerTotal += dealerCard.value;
-	std::cout << "Dealer's second card: " << dealerCard.cardName << '\n';
-
-	while (dealerTotal <= 16)
-	{
-		dealerAddCard();
-	}
-	if (dealerTotal > 21)
-	{
-		std::cout << "congratulations, you won!";
-	}
-	else if (total > dealerTotal)
-	{
-		std::cout << "congratulations, you won!";
-	}
-	else if (total < dealerTotal)
-	{
-		std::cout << "you lost, skill issue";
-	}
-	else
-	{
-		std::cout << "you tied!";
-	}
-}
-
-void hit()
+std::string cardNumberPrinter(int additionalCards)
 {
 	std::string cardNumber{};
 
@@ -120,18 +78,68 @@ void hit()
 		cardNumber = "sixth";
 		break;
 	}
+	return cardNumber;
+}
 
+void dealerAddCard()
+{
+	int randIndex{ Random::get(0, 13) };
+	Card newCard{ Blackjack::cardValues[randIndex] };
+	
+	++dealerAdditionalCards;
+	std::string cardNumber{cardNumberPrinter(dealerAdditionalCards)};
+	std::cout << "Dealer's " << cardNumber << " card: " << newCard.cardName << '\n';
+	newCard.dealerAceChecker();
+	dealerTotal += newCard.value;
+	std::cout << "Dealer's total: " << dealerTotal << '\n';
+}
+
+void stand()
+{
+	int randIndex{ Random::get(0, 13) };
+	Card dealerCard{ Blackjack::cardValues[randIndex] };
+	dealerCard.aceChecker();
+	dealerTotal += dealerCard.value;
+	std::cout << "Dealer's second card: " << dealerCard.cardName << '\n';
+
+	while (dealerTotal <= 16)
+	{
+		dealerAddCard();
+	}
+	if (dealerTotal > 21)
+	{
+		std::cout << "congratulations, you won!";
+	}
+	else if (total > dealerTotal)
+	{
+		std::cout << "congratulations, you won!";
+	}
+	else if (total < dealerTotal)
+	{
+		std::cout << "You lost, skill issue.";
+	}
+	else
+	{
+		std::cout << "you tied!";
+	}
+}
+
+void hit()
+{
 	int randIndex{ Random::get(0, 13) };
 	Card newCard{ Blackjack::cardValues[randIndex] };
 
+	++additionalCards;
+	std::string cardNumber{ cardNumberPrinter(additionalCards) };
 	std::cout << "Here is your " << cardNumber << " card: ";
 	std::cout << newCard.cardName << '\n';
+	newCard.aceChecker();
 	total += newCard.value;
 	std::cout << "Total: " << total << '\n';
 
 	if (total > 21)
 	{
-		std::cout << "You Lost.";
+		std::cout << "You lost, skill issue.";
 	}
 	else if (total == 21)
 	{
@@ -155,6 +163,7 @@ void intro()
 	int randIndex2{ Random::get(0, 13) };
 	Card card2{ Blackjack::cardValues[randIndex2] };
 	std::cout << card2.cardName << '\n';
+	card2.aceChecker();
 	total += card2.value;
 
 	if (total == 21)
