@@ -2,6 +2,8 @@
 #include <array>
 #include <limits>
 #include <string_view>
+#include <thread>
+#include <chrono>
 #include "Random.h"
 
 static int total{};
@@ -94,31 +96,38 @@ std::string cardNumberPrinter(int additionalCards)
 	return cardNumber;
 }
 
-void dealerAddCard()
+Card getRandomCard()
 {
 	int randIndex{ Random::get(0, 13) };
 	Card newCard{ Blackjack::cardValues[randIndex] };
+	return newCard;
+}
+
+void dealerAddCard()
+{
+	Card newCard{ getRandomCard() };
 	
 	++dealerAdditionalCards;
 	std::string cardNumber{cardNumberPrinter(dealerAdditionalCards)};
 	std::cout << "Dealer's " << cardNumber << " card: " << newCard.cardName << '\n';
 	newCard.dealerAceChecker();
 	dealerTotal += newCard.value;
-	std::cout << "Dealer's total: " << dealerTotal << '\n';
 }
 
 void stand()
 {
-	int randIndex{ Random::get(0, 13) };
-	Card dealerCard{ Blackjack::cardValues[randIndex] };
-	dealerCard.aceChecker();
-	dealerTotal += dealerCard.value;
-	std::cout << "Dealer's second card: " << dealerCard.cardName << '\n';
+	Card dealerCard2{ getRandomCard() };
+	dealerCard2.aceChecker();
+	dealerTotal += dealerCard2.value;
+	std::cout << "Dealer's second card: " << dealerCard2.cardName << '\n';
 
 	while (dealerTotal <= 16)
 	{
 		dealerAddCard();
 	}
+
+	std::cout << "Dealer's total: " << dealerTotal << '\n';
+
 	if (dealerTotal > 21)
 	{
 		std::cout << "congratulations, you won!\n";
@@ -139,8 +148,7 @@ void stand()
 
 void hit()
 {
-	int randIndex{ Random::get(0, 13) };
-	Card newCard{ Blackjack::cardValues[randIndex] };
+	Card newCard{ getRandomCard() };
 
 	++additionalCards;
 	std::string cardNumber{ cardNumberPrinter(additionalCards) };
@@ -164,19 +172,46 @@ void hit()
 	}
 }
 
+bool playAgain()
+{
+	std::cout << "Do you want to play again? Type 'yes' or 'no'\n";
+	std::string input{ getValidInput("yes", "no") };
+	if (input == "yes")
+	{
+		std::cout << '\n';
+		total = 0;
+		dealerTotal = 0;
+		dealerAdditionalCards = 0;
+		additionalCards = 0;
+		return true;
+	}
+	else if (input == "no")
+	{
+		std::cout << "You quit the game like a noob.\n";
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		return false;
+	}
+}
+
+void clearScreen()
+{
+	for (int i{ 0 }; i < 20; i++)
+	{
+		std::cout << '\n';
+	}
+}
+
 void intro()
 {
 	while (true)
 	{
 		std::cout << "Here is your first card: ";
-		int randIndex1{ Random::get(0, 13) };
-		Card card1{ Blackjack::cardValues[randIndex1] };
+		Card card1{ getRandomCard()};
 		std::cout << card1.cardName << '\n';
 		total += card1.value;
 
 		std::cout << "Here is your second card: ";
-		int randIndex2{ Random::get(0, 13) };
-		Card card2{ Blackjack::cardValues[randIndex2] };
+		Card card2{ getRandomCard() };
 		std::cout << card2.cardName << '\n';
 		card2.aceChecker();
 		total += card2.value;
@@ -184,33 +219,30 @@ void intro()
 		if (total == 21)
 		{
 			std::cout << "congratulations you won!\n";
+			if (playAgain())
+			{
+				clearScreen();
+				continue;
+			}
 			return;
 		}
 
 		std::cout << "Total: " << total << "\n\n";
 
 		std::cout << "Dealer's first card: ";
-		int randIndex3{ Random::get(0, 13) };
-		Card dealerCard1{ Blackjack::cardValues[randIndex3] };
+		Card dealerCard1{ getRandomCard()};
 		std::cout << dealerCard1.cardName << '\n';
 		dealerTotal += dealerCard1.value;
 
-		std::cout << "Dealer's second card: hidden\n";
+		std::cout << "Dealer's second card: hidden\n\n";
 		choice();
 
-		std::cout << "Do you want to play again? Type 'yes' or 'no'\n";
-		std::string input{ getValidInput("yes", "no") };
-		if (input == "yes")
+		if (playAgain())
 		{
-			total = 0;
-			dealerTotal = 0;
+			clearScreen();
 			continue;
 		}
-		else if (input == "no")
-		{
-			std::cout << "You quit the game like a noob.\n";
-			return;
-		}
+		return;
 	}
 
 }
