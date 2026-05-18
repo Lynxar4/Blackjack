@@ -1,6 +1,7 @@
 #include <iostream>
-#include <vector>
 #include <array>
+#include <limits>
+#include <string_view>
 #include "Random.h"
 
 static int total{};
@@ -43,11 +44,23 @@ namespace Blackjack
 void hit();
 void stand();
 
+std::string getValidInput(std::string_view condition1, std::string_view condition2)
+{
+	std::string input{};
+	std::cin >> input;
+	while (input != condition1 && input != condition2)
+	{
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		std::cout << "Invalid input. Type '" << condition1 << "' or '" << condition2 << "'\n";
+		std::cin >> input;
+	}
+	return input;
+}
+
 void choice()
 {
 	std::cout << "Do you want to hit or stand?\n";
-	std::string input{};
-	std::cin >> input;
+	std::string input{ getValidInput("hit", "stand") };
 
 	if (input == "hit")
 	{
@@ -108,19 +121,19 @@ void stand()
 	}
 	if (dealerTotal > 21)
 	{
-		std::cout << "congratulations, you won!";
+		std::cout << "congratulations, you won!\n";
 	}
 	else if (total > dealerTotal)
 	{
-		std::cout << "congratulations, you won!";
+		std::cout << "congratulations, you won!\n";
 	}
 	else if (total < dealerTotal)
 	{
-		std::cout << "You lost, skill issue.";
+		std::cout << "You lost, skill issue.\n";
 	}
 	else
 	{
-		std::cout << "you tied!";
+		std::cout << "you tied!\n";
 	}
 }
 
@@ -139,11 +152,11 @@ void hit()
 
 	if (total > 21)
 	{
-		std::cout << "You lost, skill issue.";
+		std::cout << "You lost, skill issue.\n";
 	}
 	else if (total == 21)
 	{
-		std::cout << "congratulations, you won!";
+		std::cout << "congratulations, you won!\n";
 	}
 	else
 	{
@@ -153,35 +166,53 @@ void hit()
 
 void intro()
 {
-	std::cout << "Here is your first card: ";
-	int randIndex1{ Random::get(0, 13)};
-	Card card1{ Blackjack::cardValues[randIndex1] };
-	std::cout << card1.cardName << '\n';
-	total += card1.value;
-
-	std::cout << "Here is your second card: ";
-	int randIndex2{ Random::get(0, 13) };
-	Card card2{ Blackjack::cardValues[randIndex2] };
-	std::cout << card2.cardName << '\n';
-	card2.aceChecker();
-	total += card2.value;
-
-	if (total == 21)
+	while (true)
 	{
-		std::cout << "congratulations you won!";
-		return;
+		std::cout << "Here is your first card: ";
+		int randIndex1{ Random::get(0, 13) };
+		Card card1{ Blackjack::cardValues[randIndex1] };
+		std::cout << card1.cardName << '\n';
+		total += card1.value;
+
+		std::cout << "Here is your second card: ";
+		int randIndex2{ Random::get(0, 13) };
+		Card card2{ Blackjack::cardValues[randIndex2] };
+		std::cout << card2.cardName << '\n';
+		card2.aceChecker();
+		total += card2.value;
+
+		if (total == 21)
+		{
+			std::cout << "congratulations you won!\n";
+			return;
+		}
+
+		std::cout << "Total: " << total << "\n\n";
+
+		std::cout << "Dealer's first card: ";
+		int randIndex3{ Random::get(0, 13) };
+		Card dealerCard1{ Blackjack::cardValues[randIndex3] };
+		std::cout << dealerCard1.cardName << '\n';
+		dealerTotal += dealerCard1.value;
+
+		std::cout << "Dealer's second card: hidden\n";
+		choice();
+
+		std::cout << "Do you want to play again? Type 'yes' or 'no'\n";
+		std::string input{ getValidInput("yes", "no") };
+		if (input == "yes")
+		{
+			total = 0;
+			dealerTotal = 0;
+			continue;
+		}
+		else if (input == "no")
+		{
+			std::cout << "You quit the game like a noob.\n";
+			return;
+		}
 	}
 
-	std::cout << "Total: " << total << "\n\n";
-
-	std::cout << "Dealer's first card: ";
-	int randIndex3{ Random::get(0, 13) };
-	Card dealerCard1{ Blackjack::cardValues[randIndex3] };
-	std::cout << dealerCard1.cardName << '\n';
-	dealerTotal += dealerCard1.value;
-
-	std::cout << "Dealer's second card: hidden\n";
-	choice();
 }
 
 int main()
