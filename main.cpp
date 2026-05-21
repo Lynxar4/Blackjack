@@ -1,9 +1,11 @@
 #include <iostream>
+#include <vector>
 #include <array>
 #include <limits>
 #include <string_view>
 #include <thread>
 #include <chrono>
+#include <cctype>
 #include "Random.h"
 
 static int total{};
@@ -15,6 +17,7 @@ struct Card
 {
 	int value{};
 	std::string cardName{};
+	std::string suit{};
 
 	void aceChecker()
 	{
@@ -35,7 +38,7 @@ struct Card
 
 namespace Blackjack
 {
-	std::array<Card, 14> cardValues
+	std::vector<Card> cardValues
 	{
 		Card{1, "one"}, Card{2, "two"}, Card{3, "three"}, Card{4, "four"}, Card{5, "five"},
 		Card{6, "six"}, Card{7, "seven"}, Card{8, "eight"}, Card{9, "nine"}, Card{10, "ten"},
@@ -46,29 +49,33 @@ namespace Blackjack
 void hit();
 void stand();
 
-std::string getValidInput(std::string_view condition1, std::string_view condition2)
+char getValidInput(char condition1, char condition2)
 {
-	std::string input{};
-	std::cin >> input;
-	while (input != condition1 && input != condition2)
+	while (true)
 	{
-		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		std::cout << "Invalid input. Type '" << condition1 << "' or '" << condition2 << "'\n";
+		char input{};
 		std::cin >> input;
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		input = std::tolower(input);
+		if (input != condition1 && input != condition2)
+		{
+			std::cout << "Your input is not valid. Enter '" << condition1 << "' or '" << condition2 << "'\n";
+			continue;
+		}
+		return input;
 	}
-	return input;
 }
 
 void choice()
 {
 	std::cout << "Do you want to hit or stand?\n";
-	std::string input{ getValidInput("hit", "stand") };
+	char input{ getValidInput('h', 's')};
 
-	if (input == "hit")
+	if (input == 'h')
 	{
 		hit();
 	}
-	else if (input == "stand")
+	else if (input == 's')
 	{
 		stand();
 	}
@@ -109,7 +116,9 @@ void dealerAddCard()
 	
 	++dealerAdditionalCards;
 	std::string cardNumber{cardNumberPrinter(dealerAdditionalCards)};
-	std::cout << "Dealer's " << cardNumber << " card: " << newCard.cardName << '\n';
+	std::cout << "Dealer's " << cardNumber << " card: ";
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::cout << newCard.cardName << '\n';
 	newCard.dealerAceChecker();
 	dealerTotal += newCard.value;
 }
@@ -119,7 +128,9 @@ void stand()
 	Card dealerCard2{ getRandomCard() };
 	dealerCard2.aceChecker();
 	dealerTotal += dealerCard2.value;
-	std::cout << "Dealer's second card: " << dealerCard2.cardName << '\n';
+	std::cout << "Dealer's second card: ";
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::cout << dealerCard2.cardName << '\n';
 
 	while (dealerTotal <= 16)
 	{
@@ -153,6 +164,7 @@ void hit()
 	++additionalCards;
 	std::string cardNumber{ cardNumberPrinter(additionalCards) };
 	std::cout << "Here is your " << cardNumber << " card: ";
+	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::cout << newCard.cardName << '\n';
 	newCard.aceChecker();
 	total += newCard.value;
@@ -175,8 +187,8 @@ void hit()
 bool playAgain()
 {
 	std::cout << "Do you want to play again? Type 'yes' or 'no'\n";
-	std::string input{ getValidInput("yes", "no") };
-	if (input == "yes")
+	char input{ getValidInput('y', 'n')};
+	if (input == 'y')
 	{
 		std::cout << '\n';
 		total = 0;
@@ -185,7 +197,7 @@ bool playAgain()
 		additionalCards = 0;
 		return true;
 	}
-	else if (input == "no")
+	else if (input == 'n')
 	{
 		std::cout << "You quit the game like a noob.\n";
 		std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -195,7 +207,7 @@ bool playAgain()
 
 void clearScreen()
 {
-	for (int i{ 0 }; i < 20; i++)
+	for (int i{ 0 }; i < 30; i++)
 	{
 		std::cout << '\n';
 	}
