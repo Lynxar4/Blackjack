@@ -18,36 +18,10 @@ struct Card
 	int value{};
 	std::string cardName{};
 	std::string suit{};
-
-	void aceChecker()
-	{
-		if (cardName == "Ace" && value + total > 21)
-		{
-			value = 1;
-		}
-	}
-
-	void dealerAceChecker()
-	{
-		if (cardName == "Ace" && value + dealerTotal > 21)
-		{
-			value = 1;
-		}
-	}
 };
 
-namespace Blackjack
-{
-	std::vector<Card> cardValues
-	{
-		Card{1, "one"}, Card{2, "two"}, Card{3, "three"}, Card{4, "four"}, Card{5, "five"},
-		Card{6, "six"}, Card{7, "seven"}, Card{8, "eight"}, Card{9, "nine"}, Card{10, "ten"},
-		Card{10, "Jack"}, Card{10, "Queen"}, Card{10, "King"}, Card{11, "Ace"}
-	};
-}
-
-void hit();
-void stand();
+void hit(std::vector<Card>& deck);
+void stand(std::vector<Card>& deck);
 
 char getValidInput(char condition1, char condition2)
 {
@@ -66,18 +40,18 @@ char getValidInput(char condition1, char condition2)
 	}
 }
 
-void choice()
+void choice(std::vector<Card>& deck)
 {
 	std::cout << "Do you want to hit or stand?\n";
 	char input{ getValidInput('h', 's')};
 
 	if (input == 'h')
 	{
-		hit();
+		hit(deck);
 	}
 	else if (input == 's')
 	{
-		stand();
+		stand(deck);
 	}
 }
 
@@ -103,30 +77,42 @@ std::string cardNumberPrinter(int additionalCards)
 	return cardNumber;
 }
 
-Card getRandomCard()
+Card getRandomCard(std::vector<Card>& deck)
 {
-	int randIndex{ Random::get(0, 13) };
-	Card newCard{ Blackjack::cardValues[randIndex] };
+	int randIndex{ Random::get(0, deck.size() - 1) };
+	Card newCard{deck[randIndex] };
+	deck.erase(deck.begin() + randIndex);
 	return newCard;
 }
 
-void dealerAddCard()
+void aceChecker(Card& card)
 {
-	Card newCard{ getRandomCard() };
+	if (card.cardName == "Ace")
+	{
+		if (card.value + total > 21)
+		{
+			card.value = 1;
+		}
+	}
+}
+
+void dealerAddCard(std::vector<Card>& deck)
+{
+	Card newCard{ getRandomCard(deck) };
 	
 	++dealerAdditionalCards;
 	std::string cardNumber{cardNumberPrinter(dealerAdditionalCards)};
 	std::cout << "Dealer's " << cardNumber << " card: ";
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::cout << newCard.cardName << '\n';
-	newCard.dealerAceChecker();
+	aceChecker(newCard);
 	dealerTotal += newCard.value;
 }
 
-void stand()
+void stand(std::vector<Card>& deck)
 {
-	Card dealerCard2{ getRandomCard() };
-	dealerCard2.aceChecker();
+	Card dealerCard2{ getRandomCard(deck) };
+	aceChecker(dealerCard2);
 	dealerTotal += dealerCard2.value;
 	std::cout << "Dealer's second card: ";
 	std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -134,7 +120,7 @@ void stand()
 
 	while (dealerTotal <= 16)
 	{
-		dealerAddCard();
+		dealerAddCard(deck);
 	}
 
 	std::cout << "Dealer's total: " << dealerTotal << '\n';
@@ -157,16 +143,16 @@ void stand()
 	}
 }
 
-void hit()
+void hit(std::vector<Card>& deck)
 {
-	Card newCard{ getRandomCard() };
+	Card newCard{ getRandomCard(deck) };
 
 	++additionalCards;
 	std::string cardNumber{ cardNumberPrinter(additionalCards) };
 	std::cout << "Here is your " << cardNumber << " card: ";
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::cout << newCard.cardName << '\n';
-	newCard.aceChecker();
+	aceChecker(newCard);
 	total += newCard.value;
 	std::cout << "Total: " << total << '\n';
 
@@ -180,7 +166,7 @@ void hit()
 	}
 	else
 	{
-		choice();
+		choice(deck);
 	}
 }
 
@@ -213,19 +199,38 @@ void clearScreen()
 	}
 }
 
+std::vector<Card> createDeck()
+{
+	std::array<std::string, 4> suits{ "heart", "club", "diamond", "spade" };
+	std::array<std::string, 13> cardValueNames{ "Ace", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "Jack", "Queen", "King" };
+	std::array<int, 13> cardValues{ 11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10};
+
+
+	std::vector<Card> fullDeck{};
+	for (int i{ 0 }; i < suits.size(); ++i)
+	{
+		for (int j{ 0 }; j < cardValues.size(); ++j)
+		{
+			fullDeck.emplace_back(Card{ cardValues[j], cardValueNames[j], suits[i] });
+		}
+	}
+	return fullDeck;
+}
+
 void intro()
 {
+	std::vector<Card> deck{ createDeck() };
 	while (true)
 	{
 		std::cout << "Here is your first card: ";
-		Card card1{ getRandomCard()};
+		Card card1{ getRandomCard(deck)};
 		std::cout << card1.cardName << '\n';
 		total += card1.value;
 
 		std::cout << "Here is your second card: ";
-		Card card2{ getRandomCard() };
+		Card card2{ getRandomCard(deck) };
 		std::cout << card2.cardName << '\n';
-		card2.aceChecker();
+		aceChecker(card2);
 		total += card2.value;
 
 		if (total == 21)
@@ -242,15 +247,16 @@ void intro()
 		std::cout << "Total: " << total << "\n\n";
 
 		std::cout << "Dealer's first card: ";
-		Card dealerCard1{ getRandomCard()};
+		Card dealerCard1{ getRandomCard(deck)};
 		std::cout << dealerCard1.cardName << '\n';
 		dealerTotal += dealerCard1.value;
-
 		std::cout << "Dealer's second card: hidden\n\n";
-		choice();
+
+		choice(deck);
 
 		if (playAgain())
 		{
+			deck = createDeck();
 			clearScreen();
 			continue;
 		}
