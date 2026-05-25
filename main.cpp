@@ -147,6 +147,11 @@ void addBalance(double& balance, const double& betAmount)
 	std::cout << "balance: $" << balance << '\n';
 }
 
+void addBalance21(double& balance, const double& betAmount)
+{
+	balance += betAmount * 1.5;
+	std::cout << "balance: $" << balance << '\n';
+}
 void removeBalance(double& balance, const double& betAmount)
 {
 	balance -= betAmount;
@@ -212,7 +217,7 @@ void hit(std::vector<Card>& deck, double& balance, const double& betAmount)
 	else if (total == 21)
 	{
 		std::cout << "congratulations, you won!\n";
-		addBalance(balance, betAmount);
+		addBalance21(balance, betAmount);
 	}
 	else
 	{
@@ -236,7 +241,7 @@ bool playAgain()
 	else if (input == 'n')
 	{
 		std::cout << "You quit the game like a noob.\n";
-		std::this_thread::sleep_for(std::chrono::seconds(1));
+		std::this_thread::sleep_for(std::chrono::seconds(2));
 		return false;
 	}
 }
@@ -274,6 +279,24 @@ double bet(const double& balance)
 	return amount;
 }
 
+bool checkGameOver(const double& balance)
+{
+	if (balance >= 500)
+	{
+		std::cout << "Congratulations you beat the game!";
+		std::this_thread::sleep_for(std::chrono::seconds(2));
+		return true;
+	}
+	else if (balance <= 0)
+	{
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		std::cout << "You're out of money. Goodbye buddy.";
+		std::this_thread::sleep_for(std::chrono::seconds(2));
+		return true;
+	}
+	return false;
+}
+
 void intro()
 {
 	std::cout << "Hi, welcome to Blackjack | Goal: Get $500\n";
@@ -298,7 +321,11 @@ void intro()
 		if (total == 21)
 		{
 			std::cout << "congratulations you won!\n";
-			balance *= 1.5;
+			addBalance21(balance, betAmount);
+			if (checkGameOver(balance))
+			{
+				return;
+			}
 			if (playAgain())
 			{
 				clearScreen();
@@ -317,18 +344,11 @@ void intro()
 
 		choice(deck, balance, betAmount);
 
-		if (balance == 0)
+		if (checkGameOver(balance))
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-			std::cout << "You're out of money. Goodbye buddy.";
-			std::this_thread::sleep_for(std::chrono::seconds(1));
 			return;
 		}
-		else if (balance == 500)
-		{
-			std::cout << "Congratulations you beat the game!";
-			return;
-		}
+
 		if (playAgain())
 		{
 			deck = createDeck();
