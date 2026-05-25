@@ -20,8 +20,8 @@ struct Card
 	std::string suit{};
 };
 
-void hit(std::vector<Card>& deck);
-void stand(std::vector<Card>& deck);
+void hit(std::vector<Card>& deck, double& balance, const double& betAmount);
+void stand(std::vector<Card>& deck, double& balance, const double& betAmount);
 
 char getValidInput(char condition1, char condition2)
 {
@@ -40,18 +40,50 @@ char getValidInput(char condition1, char condition2)
 	}
 }
 
-void choice(std::vector<Card>& deck)
+double getValidNumber(const double& balance)
+{
+	while (true)
+	{
+		double num{};
+		std::cin >> num;
+		if (!std::cin)
+		{
+			std::cout << "Invalid input. Please enter a number.\n";
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			continue;
+		}
+		else if (num > balance)
+		{
+			std::cout << "You can't bet more then your balance\n";
+			continue;
+		}
+		else if (num == 0)
+		{
+			std::cout << "You have to bet mate, this is a gambling game\n";
+			continue;
+		}
+		else if (num < 0)
+		{
+			std::cout << "Why are you entering negative numbers??\n";
+			continue;
+		}
+		return num;
+	}
+}
+
+void choice(std::vector<Card>& deck, double& balance, const double& betAmount)
 {
 	std::cout << "Do you want to hit or stand?\n";
 	char input{ getValidInput('h', 's')};
 
 	if (input == 'h')
 	{
-		hit(deck);
+		hit(deck, balance, betAmount);
 	}
 	else if (input == 's')
 	{
-		stand(deck);
+		stand(deck, balance, betAmount);
 	}
 }
 
@@ -79,7 +111,7 @@ std::string cardNumberPrinter(int additionalCards)
 
 Card getRandomCard(std::vector<Card>& deck)
 {
-	int randIndex{ Random::get(0, deck.size() - 1) };
+	int randIndex{ Random::get(0, static_cast<int>(deck.size()) - 1) };
 	Card newCard{deck[randIndex] };
 	deck.erase(deck.begin() + randIndex);
 	return newCard;
@@ -109,7 +141,19 @@ void dealerAddCard(std::vector<Card>& deck)
 	dealerTotal += newCard.value;
 }
 
-void stand(std::vector<Card>& deck)
+void addBalance(double& balance, const double& betAmount)
+{
+	balance += betAmount;
+	std::cout << "balance: $" << balance << '\n';
+}
+
+void removeBalance(double& balance, const double& betAmount)
+{
+	balance -= betAmount;
+	std::cout << "balance: $" << balance << '\n';
+}
+
+void stand(std::vector<Card>& deck, double& balance, const double& betAmount)
 {
 	Card dealerCard2{ getRandomCard(deck) };
 	aceChecker(dealerCard2);
@@ -128,22 +172,26 @@ void stand(std::vector<Card>& deck)
 	if (dealerTotal > 21)
 	{
 		std::cout << "congratulations, you won!\n";
+		addBalance(balance, betAmount);
 	}
 	else if (total > dealerTotal)
 	{
 		std::cout << "congratulations, you won!\n";
+		addBalance(balance, betAmount);
 	}
 	else if (total < dealerTotal)
 	{
 		std::cout << "You lost, skill issue.\n";
+		removeBalance(balance, betAmount);
 	}
 	else
 	{
 		std::cout << "you tied!\n";
+		std::cout << "balance: $" << balance << '\n';
 	}
 }
 
-void hit(std::vector<Card>& deck)
+void hit(std::vector<Card>& deck, double& balance, const double& betAmount)
 {
 	Card newCard{ getRandomCard(deck) };
 
@@ -159,14 +207,16 @@ void hit(std::vector<Card>& deck)
 	if (total > 21)
 	{
 		std::cout << "You lost, skill issue.\n";
+		removeBalance(balance, betAmount);
 	}
 	else if (total == 21)
 	{
 		std::cout << "congratulations, you won!\n";
+		addBalance(balance, betAmount);
 	}
 	else
 	{
-		choice(deck);
+		choice(deck, balance, betAmount);
 	}
 }
 
@@ -217,11 +267,23 @@ std::vector<Card> createDeck()
 	return fullDeck;
 }
 
+double bet(const double& balance)
+{
+	std::cout << "Choose how much to bet\n";
+	double amount{ getValidNumber(balance) };
+	return amount;
+}
+
 void intro()
 {
+	std::cout << "Hi, welcome to Blackjack | Goal: Get $500\n";
+	std::cout << "Starting balance: $100\n";
+	double balance{ 100 };
+
 	std::vector<Card> deck{ createDeck() };
 	while (true)
 	{
+		double betAmount{ bet(balance) };
 		std::cout << "Here is your first card: ";
 		Card card1{ getRandomCard(deck)};
 		std::cout << card1.cardName << '\n';
@@ -236,6 +298,7 @@ void intro()
 		if (total == 21)
 		{
 			std::cout << "congratulations you won!\n";
+			balance *= 1.5;
 			if (playAgain())
 			{
 				clearScreen();
@@ -252,8 +315,20 @@ void intro()
 		dealerTotal += dealerCard1.value;
 		std::cout << "Dealer's second card: hidden\n\n";
 
-		choice(deck);
+		choice(deck, balance, betAmount);
 
+		if (balance == 0)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			std::cout << "You're out of money. Goodbye buddy.";
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			return;
+		}
+		else if (balance == 500)
+		{
+			std::cout << "Congratulations you beat the game!";
+			return;
+		}
 		if (playAgain())
 		{
 			deck = createDeck();
